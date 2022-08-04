@@ -144,7 +144,7 @@ namespace WaterPhysics {
         [Header("Physics")]
         [Min(1e-5f)] 
         [Tooltip("The amount of bouyancy applied to the body.")]
-        public float buoyancy = 0.95f;
+        public float buoyancy = 1.2f;
 
         [Tooltip("The fluid drag of the body.")]
         public float drag = 1f;
