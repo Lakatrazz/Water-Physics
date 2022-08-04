@@ -52,9 +52,8 @@ namespace WaterPhysics
                 this.UpdateBoxCollider(this.rows.intValue, this.columns.intValue, this.quadSegmentSize.floatValue);
             }
 
-            EditorGUILayout.PropertyField(this.rows);
-            EditorGUILayout.PropertyField(this.columns);
-            EditorGUILayout.PropertyField(this.quadSegmentSize);
+            DrawDefaultInspector();
+
             if (EditorGUI.EndChangeCheck())
             {
                 this.rows.intValue = Mathf.Max(1, this.rows.intValue);

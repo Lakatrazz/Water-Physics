@@ -35,7 +35,7 @@ namespace WaterPhysics {
                     var water = attachedBody.water;
                     var rigidbody = attachedBody.rigidbody;
 
-                    Vector3 forceAtSingleVoxel = GetBuoyancyForce(attachedBody.water) / voxels.Length;
+                    Vector3 forceAtSingleVoxel = attachedBody.GetBuoyantForce() / voxels.Length;
                     Bounds bounds = collider.bounds;
                     float voxelHeight = bounds.size.y * attachedBody.normalizedVoxelSize;
 
@@ -78,10 +78,6 @@ namespace WaterPhysics {
                         Gizmos.DrawCube(transform.TransformPoint(voxels[i]), voxelSize * 0.8f);
                     }
                 }
-            }
-
-            private Vector3 GetBuoyancyForce(WaterVolume water) {
-                return attachedBody.buoyancy * attachedBody.rigidbody.mass * water.density * -Physics.gravity;
             }
 
             private Vector3[] CutIntoVoxels()
@@ -234,6 +230,14 @@ namespace WaterPhysics {
             float deltaTime = Time.deltaTime;
             rigidbody.velocity *= (1 - deltaTime * drag);
             rigidbody.angularVelocity *= Mathf.Clamp01(1f - angularDrag * deltaTime);
+        }
+
+        public virtual Vector3 GetBuoyantForce()
+        {
+            if (water)
+                return buoyancy / (float)colliders.Count * rigidbody.mass * water.density * -Physics.gravity;
+            else
+                return Vector3.zero;
         }
     }
 }
