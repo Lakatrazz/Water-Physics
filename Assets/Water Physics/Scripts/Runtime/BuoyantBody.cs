@@ -53,7 +53,10 @@ namespace WaterPhysics {
                         surfaceRotation = Quaternion.Slerp(surfaceRotation, Quaternion.identity, submergedFactor);
 
                         Vector3 finalVoxelForce = surfaceRotation * (forceAtSingleVoxel * submergedFactor);
-                        rigidbody.AddForceAtPosition(finalVoxelForce, worldPoint);
+                        Vector3 finalVoxelTorque = Vector3.Cross(worldPoint - rigidbody.worldCenterOfMass, finalVoxelForce);
+
+                        rigidbody.AddForce(finalVoxelForce, ForceMode.Acceleration);
+                        rigidbody.AddTorque(finalVoxelTorque, ForceMode.Acceleration);
 
                         Debug.DrawLine(worldPoint, worldPoint + finalVoxelForce.normalized, Color.blue);
                     }
@@ -235,7 +238,7 @@ namespace WaterPhysics {
         public virtual Vector3 GetBuoyantForce()
         {
             if (water)
-                return buoyancy / (float)colliders.Count * rigidbody.mass * water.density * -Physics.gravity;
+                return buoyancy / (float)colliders.Count * water.density * -Physics.gravity;
             else
                 return Vector3.zero;
         }
