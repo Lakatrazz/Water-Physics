@@ -30,8 +30,8 @@ namespace WaterPhysics {
                 }
             }
 
-            public void FixedUpdate() {
-                if (attachedBody && attachedBody.water && voxels != null && voxels.Length > 0) {
+            public void OnFixedUpdate() {
+                if (voxels != null && voxels.Length > 0) {
                     var water = attachedBody.water;
                     var rigidbody = attachedBody.rigidbody;
 
@@ -43,12 +43,12 @@ namespace WaterPhysics {
                     {
                         Vector3 worldPoint = transform.TransformPoint(voxels[i]);
 
-                        float waterLevel = water.GetWaterLevel(worldPoint);
-                        float deepLevel = waterLevel - worldPoint.y + (voxelHeight / 2f); // How deep is the voxel                    
-                        float submergedFactor = Mathf.Clamp(deepLevel / voxelHeight, 0f, 1f); // 0 - voxel is fully out of the water, 1 - voxel is fully submerged
+                        float waterLevel = water.GetWaterLevel();
+                        float deepLevel = waterLevel - worldPoint.y + (voxelHeight * 0.5f); // How deep is the voxel                    
+                        float submergedFactor = Mathf.Clamp01(deepLevel / voxelHeight); // 0 - voxel is fully out of the water, 1 - voxel is fully submerged
                         percentSubmerged += submergedFactor;
 
-                        Vector3 surfaceNormal = water.GetSurfaceNormal(worldPoint);
+                        Vector3 surfaceNormal = water.GetSurfaceNormal();
                         Quaternion surfaceRotation = Quaternion.FromToRotation(water.transform.up, surfaceNormal);
                         surfaceRotation = Quaternion.Slerp(surfaceRotation, Quaternion.identity, submergedFactor);
 
@@ -57,8 +57,6 @@ namespace WaterPhysics {
 
                         rigidbody.AddForce(finalVoxelForce, ForceMode.Acceleration);
                         rigidbody.AddTorque(finalVoxelTorque, ForceMode.Acceleration);
-
-                        Debug.DrawLine(worldPoint, worldPoint + finalVoxelForce.normalized, Color.blue);
                     }
 
                     percentSubmerged /= voxels.Length; // 0 - object is fully out of the water, 1 - object is fully submerged
@@ -209,6 +207,9 @@ namespace WaterPhysics {
 
         protected virtual void FixedUpdate() {
             if (water) {
+                foreach (var collider in colliders)
+                    collider.OnFixedUpdate();
+
                 percentSubmerged = GetPercentSubmerged();
                 float drag = this.drag * water.drag;
                 float angularDrag = this.angularDrag * water.angularDrag;

@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+
 using System.Collections.Generic;
 
 namespace WaterPhysics
@@ -154,9 +155,6 @@ namespace WaterPhysics
                     Gizmos.DrawLine(vertices[triangles[i + 0]], vertices[triangles[i + 1]]);
                     Gizmos.DrawLine(vertices[triangles[i + 1]], vertices[triangles[i + 2]]);
                     Gizmos.DrawLine(vertices[triangles[i + 2]], vertices[triangles[i + 0]]);
-
-                    Vector3 center = GetAveragePoint(vertices[triangles[i + 0]], vertices[triangles[i + 1]], vertices[triangles[i + 2]]);
-                    Vector3 normal = GetSurfaceNormal(center);
                 }
             }
 
@@ -190,34 +188,6 @@ namespace WaterPhysics
             }
         }
 
-
-        public Vector3[] GetSurroundingTrianglePolygon(Vector3 worldPoint)
-        {
-            Vector3 localPoint = transform.InverseTransformPoint(worldPoint);
-            int x = Mathf.CeilToInt(localPoint.x / QuadSegmentSize);
-            int z = Mathf.CeilToInt(localPoint.z / QuadSegmentSize);
-            if (x <= 0 || z <= 0 || x >= (Columns + 1) || z >= (Rows + 1))
-            {
-                return null;
-            }
-
-            Vector3[] trianglePolygon = new Vector3[3];
-            if ((worldPoint - GetTransformedVertex(GetIndex(z, x))).sqrMagnitude <
-                ((worldPoint - GetTransformedVertex(GetIndex(z - 1, x - 1))).sqrMagnitude))
-            {
-                trianglePolygon[0] = GetTransformedVertex(GetIndex(z, x));
-            }
-            else
-            {
-                trianglePolygon[0] = GetTransformedVertex(GetIndex(z - 1, x - 1));
-            }
-
-            trianglePolygon[1] = GetTransformedVertex(GetIndex(z - 1, x));
-            trianglePolygon[2] = GetTransformedVertex(GetIndex(z, x - 1));
-
-            return trianglePolygon;
-        }
-
         // Same algorithm that shader's
         Vector3 GetTransformedVertex(int i)
         {
@@ -231,52 +201,17 @@ namespace WaterPhysics
             return ConvertPointToWorldSpace(vertex);
         }
 
-        public Vector3 GetSurfaceNormal(Vector3 worldPoint)
-        {
-            Vector3[] meshPolygon = GetSurroundingTrianglePolygon(worldPoint);
-            if (meshPolygon != null)
-            {
-                Vector3 planeV1 = meshPolygon[1] - meshPolygon[0];
-                Vector3 planeV2 = meshPolygon[2] - meshPolygon[0];
-                Vector3 planeNormal = Vector3.Cross(planeV1, planeV2).normalized;
-                if (planeNormal.y < 0f)
-                {
-                    planeNormal *= -1f;
-                }
-
-                return planeNormal;
-            }
-
+        public Vector3 GetSurfaceNormal() {
             return transform.up;
         }
 
-        public float GetWaterLevel(Vector3 worldPoint)
-        {
-            Vector3[] meshPolygon = GetSurroundingTrianglePolygon(worldPoint);
-            if (meshPolygon != null)
-            {
-                Vector3 planeV1 = meshPolygon[1] - meshPolygon[0];
-                Vector3 planeV2 = meshPolygon[2] - meshPolygon[0];
-                Vector3 planeNormal = Vector3.Cross(planeV1, planeV2).normalized;
-                if (planeNormal.y < 0f)
-                {
-                    planeNormal *= -1f;
-                }
-
-                // Plane equation
-                float yOnWaterSurface = (-(worldPoint.x * planeNormal.x) - (worldPoint.z * planeNormal.z) + Vector3.Dot(meshPolygon[0], planeNormal)) / planeNormal.y;
-                //Vector3 pointOnWaterSurface = new Vector3(point.x, yOnWaterSurface, point.z);
-                //DebugUtils.DrawPoint(pointOnWaterSurface, Color.magenta);
-
-                return yOnWaterSurface;
-            }
-
+        public float GetWaterLevel() {
             return transform.position.y;
         }
 
         public bool IsPointUnderWater(Vector3 worldPoint)
         {
-            return GetWaterLevel(worldPoint) - worldPoint.y > 0f;
+            return GetWaterLevel() - worldPoint.y > 0f;
         }
 
         private int GetIndex(int row, int column)
