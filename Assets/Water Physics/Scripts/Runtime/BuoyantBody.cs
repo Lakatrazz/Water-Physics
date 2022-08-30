@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System;
 
 using UnityEngine;
+using Unity.Plastic.Antlr3.Runtime.Tree;
+using System.Text;
 
 namespace WaterPhysics {
     [RequireComponent(typeof(Rigidbody))]
@@ -165,7 +167,8 @@ namespace WaterPhysics {
         [NonSerialized]
         public float percentSubmerged;
 
-        private int triggerCount;
+        private bool inWaterThisFrame;
+        private int dullWaterFrameCount;
 
         protected virtual void Awake() {
             rigidbody = GetComponent<Rigidbody>();
@@ -182,31 +185,29 @@ namespace WaterPhysics {
         }
 
         protected virtual void OnTriggerEnter(Collider other) {
-            if (water != null && other.gameObject == water.gameObject) {
-                triggerCount++;
-            }
-            else if (other.GetComponent<WaterVolume>()) {
+            if (water == null && other.GetComponent<WaterVolume>()) {
                 water = other.GetComponent<WaterVolume>();
-                triggerCount++;
 
                 foreach (var collider in colliders)
                     collider.UpdateVoxels();
             }
         }
 
-        protected virtual void OnTriggerExit(Collider other) {
+        protected virtual void OnTriggerStay(Collider other) {
             if (water && water.gameObject == other.gameObject) {
-                triggerCount--;
-
-                if (triggerCount <= 0) {
-                    water = null;
-                    triggerCount = 0;
-                }
+                inWaterThisFrame = true;
             }
         }
 
         protected virtual void FixedUpdate() {
-            if (water) {
+            if (!inWaterThisFrame)
+                dullWaterFrameCount++;
+            else
+                dullWaterFrameCount = 0;
+
+            if (dullWaterFrameCount > 10)
+                water = null;
+            else if (water) {
                 foreach (var collider in colliders)
                     collider.OnFixedUpdate();
 
@@ -216,6 +217,8 @@ namespace WaterPhysics {
 
                 ApplyDrag(drag * percentSubmerged, angularDrag * percentSubmerged);
             }
+
+            inWaterThisFrame = false;
         }
 
         protected virtual float GetPercentSubmerged() {
